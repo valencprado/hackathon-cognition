@@ -12,6 +12,11 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app import app as flask_app  # noqa: E402
+from app_factory import create_app  # noqa: E402
+from database import db as _db  # noqa: E402
+
+
+# --- Fixtures for AI agents tests (section 1) ---
 
 
 @pytest.fixture()
@@ -65,3 +70,24 @@ SAMPLE_SUBJECTS = [
     "Agile development practices",
     "Software architecture fundamentals",
 ]
+
+
+# --- Fixtures for admin CRUD tests (section 2) ---
+
+
+@pytest.fixture()
+def admin_app():
+    app = create_app(testing=True)
+    yield app
+
+
+@pytest.fixture()
+def admin_client(admin_app):
+    return admin_app.test_client()
+
+
+@pytest.fixture()
+def db_session(admin_app):
+    with admin_app.app_context():
+        yield _db.session
+        _db.session.rollback()
