@@ -27,40 +27,15 @@ function formatEmoji(formato) {
   return map[(formato || '').toLowerCase()] || '\u{1F4D8}';
 }
 
-function ratingStars(nota) {
-  if (!nota) return '';
-  const full = Math.floor(nota);
-  const half = nota - full >= 0.5;
-  let stars = '\u2B50'.repeat(full);
-  if (half) stars += '\u00BD';
-  return `<span>${stars} ${nota}</span>`;
-}
-
-function popularityFromRating(nota) {
-  if (!nota) return 'M\u00E9dia';
-  if (nota >= 4.5) return 'Alta';
-  if (nota >= 3.5) return 'M\u00E9dia';
-  return 'Baixa';
-}
-
-function popularityDot(level) {
-  const map = { 'Alta': 'alta', 'M\u00E9dia': 'm\u00E9dia', 'Baixa': 'baixa' };
-  return `<span class="pop-dot ${map[level] || ''}"></span><span>${level} procura</span>`;
-}
-
 // ---- MAP API BOOK → UI BOOK ----
 function mapApiBook(apiBook, index) {
   const formato = (apiBook.formato || 'livro');
-  const popularity = popularityFromRating(apiBook.nota_amazon);
-
   return {
     id: index + 1,
     type: formato.charAt(0).toUpperCase() + formato.slice(1),
     emoji: formatEmoji(formato),
     title: apiBook.titulo || '',
     author: apiBook.autor || '',
-    popularity: popularity,
-    nota_amazon: apiBook.nota_amazon || null,
     level: apiBook.faixa_etaria || '',
     year: apiBook.ano || null,
     location: apiBook.onde_encontrar || '',
@@ -114,8 +89,7 @@ function renderResults(books) {
         <div class="item-title">${esc(b.title)}</div>
         <div class="item-author">${esc(b.author)}</div>
         <div class="item-meta">
-          <div class="item-popularity">${popularityDot(b.popularity)}</div>
-          ${b.nota_amazon ? `<span class="avail avail-ok">\u2B50 ${b.nota_amazon} Amazon</span>` : ''}
+          ${b.level ? `<span class="avail avail-ok">${esc(b.level)}</span>` : ''}
         </div>
       </div>
       <button class="extend-btn" onclick="openModal(${b.id}, '${encodeURIComponent(JSON.stringify(books))}')">
@@ -150,10 +124,8 @@ function openModal(id, encodedBooks) {
         <div class="modal-type">${esc(b.type)}</div>
         <h2 class="modal-title">${esc(b.title)}</h2>
         <p class="modal-author">${esc(b.author)}</p>
-        <div class="modal-popularity">${popularityDot(b.popularity)}</div>
         <div class="modal-badges">
           ${b.level ? `<span class="modal-badge">${esc(b.level)}</span>` : ''}
-          ${b.nota_amazon ? `<span class="modal-badge">\u2B50 ${b.nota_amazon}</span>` : ''}
         </div>
       </div>
     </div>
@@ -204,12 +176,6 @@ function openModal(id, encodedBooks) {
         <div class="info-cell">
           <span class="info-label">Faixa et\u00E1ria</span>
           <span class="info-value">${esc(b.level)}</span>
-        </div>
-        ` : ''}
-        ${b.nota_amazon ? `
-        <div class="info-cell">
-          <span class="info-label">Nota Amazon</span>
-          <span class="info-value">\u2B50 ${b.nota_amazon}</span>
         </div>
         ` : ''}
         ${b.year ? `
