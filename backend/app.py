@@ -10,7 +10,7 @@ from pipeline.orchestrator import Orchestrator
 app = Flask(__name__)
 CORS(app)
 
-DEFAULT_FORMATS = ["book", "journal", "comic"]
+DEFAULT_FORMATS = ["livro", "revista", "hq"]
 
 
 @app.route("/health", methods=["GET"])

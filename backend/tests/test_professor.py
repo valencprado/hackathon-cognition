@@ -8,44 +8,68 @@ from unittest.mock import MagicMock
 import pytest
 
 from agents.professor import ProfessorAgent
+from tests.conftest import SAMPLE_TOPICOS, SAMPLE_ANALISE
 
 
-def _make_agent(response_text: str) -> ProfessorAgent:
+def _make_professor(response_text: str) -> ProfessorAgent:
     mock_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.text = response_text
-    mock_client.models.generate_content.return_value = mock_response
+    resp = MagicMock()
+    resp.text = response_text
+    mock_client.models.generate_content.return_value = resp
     return ProfessorAgent(client=mock_client)
 
 
 class TestProfessorAgent:
-    def test_returns_four_subjects(self):
-        subjects = ["Topic A", "Topic B", "Topic C", "Topic D"]
-        agent = _make_agent(json.dumps({"subjects": subjects}))
-        result = agent.run("I want to learn Python")
-        assert result == {"subjects": subjects}
+    def test_returns_topicos_and_analise(self):
+        raw = json.dumps({"topicos": SAMPLE_TOPICOS, "analise": SAMPLE_ANALISE})
+        agent = _make_professor(raw)
+        result = agent.run("quero entender IA", ["livro", "revista"])
+        assert result["topicos"] == SAMPLE_TOPICOS
+        assert result["analise"] == SAMPLE_ANALISE
 
-    def test_raises_on_wrong_count(self):
-        agent = _make_agent(json.dumps({"subjects": ["A", "B"]}))
-        with pytest.raises(ValueError, match="exactly 4 subjects"):
-            agent.run("query")
+    def test_rejects_wrong_count(self):
+        raw = json.dumps({"topicos": ["a", "b"], "analise": "ok. ok."})
+        agent = _make_professor(raw)
+        with pytest.raises(ValueError, match="exactly 4 topicos"):
+            agent.run("test", ["livro"])
 
-    def test_raises_on_missing_key(self):
-        agent = _make_agent(json.dumps({"topics": ["A", "B", "C", "D"]}))
-        with pytest.raises(ValueError, match="exactly 4 subjects"):
-            agent.run("query")
+    def test_rejects_non_list_topicos(self):
+        raw = json.dumps({"topicos": "not a list", "analise": "ok. ok."})
+        agent = _make_professor(raw)
+        with pytest.raises(ValueError, match="exactly 4 topicos"):
+            agent.run("test", ["livro"])
 
-    def test_coerces_non_string_subjects(self):
-        agent = _make_agent(json.dumps({"subjects": [1, 2, 3, 4]}))
-        result = agent.run("query")
-        assert result == {"subjects": ["1", "2", "3", "4"]}
+    def test_rejects_missing_analise(self):
+        raw = json.dumps({"topicos": SAMPLE_TOPICOS})
+        agent = _make_professor(raw)
+        with pytest.raises(ValueError, match="non-empty analise"):
+            agent.run("test", ["livro"])
 
-    def test_raises_on_non_list_subjects(self):
-        agent = _make_agent(json.dumps({"subjects": 42}))
-        with pytest.raises(ValueError, match="exactly 4 subjects"):
-            agent.run("query")
+    def test_rejects_empty_analise(self):
+        raw = json.dumps({"topicos": SAMPLE_TOPICOS, "analise": ""})
+        agent = _make_professor(raw)
+        with pytest.raises(ValueError, match="non-empty analise"):
+            agent.run("test", ["livro"])
 
-    def test_system_prompt_is_set(self):
-        agent = ProfessorAgent(client=MagicMock())
-        assert "Professor Agent" in agent.system_prompt
-        assert "4 essential subjects" in agent.system_prompt
+    def test_temperature(self):
+        assert ProfessorAgent.temperature == 0.3
+
+    def test_formats_in_prompt(self):
+        raw = json.dumps({"topicos": SAMPLE_TOPICOS, "analise": SAMPLE_ANALISE})
+        agent = _make_professor(raw)
+        agent.run("test", ["livro", "hq"])
+        call_args = agent.client.models.generate_content.call_args
+        prompt = call_args.kwargs["contents"]
+        assert "livro, hq" in prompt
+
+    def test_retry_on_failure(self):
+        good_response = json.dumps({"topicos": SAMPLE_TOPICOS, "analise": SAMPLE_ANALISE})
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = [
+            Exception("transient error"),
+            MagicMock(text=good_response),
+        ]
+        agent = ProfessorAgent(client=mock_client)
+        result = agent.run("test", ["livro"])
+        assert result["topicos"] == SAMPLE_TOPICOS
+        assert mock_client.models.generate_content.call_count == 2

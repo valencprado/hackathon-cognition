@@ -5,80 +5,67 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from pipeline.orchestrator import Orchestrator
-from tests.conftest import SAMPLE_BOOKS, SAMPLE_BOOKS_WITH_SYNOPSIS, SAMPLE_SUBJECTS
+from tests.conftest import (
+    SAMPLE_TOPICOS,
+    SAMPLE_ANALISE,
+    SAMPLE_TOP5,
+    SAMPLE_RESUMOS,
+    SAMPLE_FICHAS,
+)
 
 
-MOCK_METADATA = {
-    "isbn": "978-0132350884",
-    "publisher": "Prentice Hall",
-    "page_count": 464,
-    "description": "Description.",
-    "thumbnail": "http://thumb.jpg",
-    "info_link": "http://info",
-}
+def _mock_orchestrator() -> Orchestrator:
+    mock_client = MagicMock()
+    orch = Orchestrator(client=mock_client)
+
+    orch.professor.run = MagicMock(
+        return_value={"topicos": SAMPLE_TOPICOS, "analise": SAMPLE_ANALISE}
+    )
+    orch.researcher.run = MagicMock(return_value={"top5": SAMPLE_TOP5})
+    orch.educator.run = MagicMock(return_value={"resumos": SAMPLE_RESUMOS})
+    orch.descriptive.run = MagicMock(return_value={"fichas": SAMPLE_FICHAS})
+    return orch
 
 
 class TestOrchestrator:
-    @patch("agents.descriptive.fetch_google_books_metadata")
-    def test_full_pipeline(self, mock_fetch):
-        mock_fetch.return_value = MOCK_METADATA
+    def test_full_pipeline(self):
+        orch = _mock_orchestrator()
+        result = orch.run("quero entender IA", ["livro"])
 
-        mock_client = MagicMock()
-        responses = [
-            json.dumps({"subjects": SAMPLE_SUBJECTS}),
-            json.dumps({"books": SAMPLE_BOOKS}),
-            json.dumps({"books": SAMPLE_BOOKS_WITH_SYNOPSIS}),
-        ]
-        call_count = {"n": 0}
-
-        def side_effect(*args, **kwargs):
-            resp = MagicMock()
-            resp.text = responses[call_count["n"]]
-            call_count["n"] += 1
-            return resp
-
-        mock_client.models.generate_content.side_effect = side_effect
-
-        orch = Orchestrator(client=mock_client)
-        result = orch.run("I want to learn software engineering", ["book"])
-
-        assert "subjects" in result
-        assert len(result["subjects"]) == 4
-        assert "books" in result
-        assert len(result["books"]) <= 3
-        assert result["books"][0]["isbn"] == "978-0132350884"
-
-    @patch("agents.descriptive.fetch_google_books_metadata")
-    def test_returns_max_three_books(self, mock_fetch):
-        mock_fetch.return_value = MOCK_METADATA
-
-        mock_client = MagicMock()
-        responses = [
-            json.dumps({"subjects": SAMPLE_SUBJECTS}),
-            json.dumps({"books": SAMPLE_BOOKS}),
-            json.dumps({"books": SAMPLE_BOOKS_WITH_SYNOPSIS}),
-        ]
-        call_count = {"n": 0}
-
-        def side_effect(*args, **kwargs):
-            resp = MagicMock()
-            resp.text = responses[call_count["n"]]
-            call_count["n"] += 1
-            return resp
-
-        mock_client.models.generate_content.side_effect = side_effect
-
-        orch = Orchestrator(client=mock_client)
-        result = orch.run("query", ["book"])
-
+        assert result["topicos"] == SAMPLE_TOPICOS
+        assert result["analise"] == SAMPLE_ANALISE
         assert len(result["books"]) == 3
 
-    def test_orchestrator_creates_agents(self):
-        mock_client = MagicMock()
-        orch = Orchestrator(client=mock_client)
+        book = result["books"][0]
+        assert book["titulo"] == "Supremacia da Máquina"
+        assert "resumo" in book
+        assert "conexao_tema" in book
+        assert "sinopse" in book
+        assert "faixa_etaria" in book
+        assert "temas" in book
+        assert "opinioes_amazon" in book
+        assert "onde_encontrar" in book
 
-        assert orch.professor.client is mock_client
-        assert orch.researcher.client is mock_client
-        assert orch.educator.client is mock_client
-        assert orch.descriptive.client is mock_client
+    def test_passes_query_to_educator(self):
+        orch = _mock_orchestrator()
+        orch.run("quero entender IA", ["livro"])
+        orch.educator.run.assert_called_once_with("quero entender IA", SAMPLE_TOP5)
+
+    def test_passes_formats_to_professor(self):
+        orch = _mock_orchestrator()
+        orch.run("test", ["livro", "hq"])
+        orch.professor.run.assert_called_once_with("test", ["livro", "hq"])
+
+    def test_passes_topicos_to_researcher(self):
+        orch = _mock_orchestrator()
+        orch.run("test", ["livro"])
+        orch.researcher.run.assert_called_once_with(SAMPLE_TOPICOS, ["livro"])
+
+    def test_professor_error_propagates(self):
+        orch = _mock_orchestrator()
+        orch.professor.run.side_effect = ValueError("bad")
+        with pytest.raises(ValueError, match="bad"):
+            orch.run("test", ["livro"])
