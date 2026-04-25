@@ -41,15 +41,18 @@ def get_tenant_map():
 @public_bp.route("/map/book/<int:book_id>", methods=["GET"])
 def get_book_location(book_id: int):
     """Return a specific book's location on the map."""
+    tenant = getattr(g, "tenant", None)
+    if not tenant:
+        return jsonify({"error": "Tenant could not be resolved"}), 400
+
     book = db.session.get(Book, book_id)
-    if not book:
+    if not book or book.tenant != tenant:
         return jsonify({"error": "Book not found"}), 404
 
     if not book.location:
         return jsonify({"error": "No location set for this book"}), 404
 
-    tenant = getattr(g, "tenant", None)
-    lib_map = LibraryMap.query.filter_by(tenant=tenant).first() if tenant else None
+    lib_map = LibraryMap.query.filter_by(tenant=tenant).first()
 
     return jsonify({
         "book": {"id": book.id, "title": book.title},
