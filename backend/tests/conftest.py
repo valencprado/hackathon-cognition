@@ -96,10 +96,6 @@ SAMPLE_FICHAS = [
         "sinopse": f"Uma obra fascinante sobre {item['topico_relacionado'].lower()}.",
         "faixa_etaria": "A partir de 16 anos",
         "temas": ["IA", "Tecnologia", "Sociedade"],
-        "opinioes_amazon": [
-            {"texto": "Excelente leitura!", "estrelas": 5},
-            {"texto": "Bom, mas denso.", "estrelas": 4},
-        ],
         "onde_encontrar": "Amazon, Kindle, Livraria Cultura",
     }
     for item in SAMPLE_TOP5
