@@ -2,56 +2,48 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+import json
+from unittest.mock import MagicMock
+
+import pytest
 
 from agents.descriptive import DescriptiveAgent
-from tests.conftest import SAMPLE_BOOKS_WITH_SYNOPSIS
+from tests.conftest import SAMPLE_TOP5, SAMPLE_FICHAS
 
 
-MOCK_METADATA = {
-    "isbn": "978-0132350884",
-    "publisher": "Prentice Hall",
-    "page_count": 464,
-    "description": "A handbook of agile software craftsmanship.",
-    "thumbnail": "http://books.google.com/thumb.jpg",
-    "info_link": "http://books.google.com/info",
-}
+def _make_descriptive(response_text: str) -> DescriptiveAgent:
+    mock_client = MagicMock()
+    resp = MagicMock()
+    resp.text = response_text
+    mock_client.models.generate_content.return_value = resp
+    return DescriptiveAgent(client=mock_client)
 
 
 class TestDescriptiveAgent:
-    @patch("agents.descriptive.fetch_google_books_metadata")
-    def test_enriches_all_books(self, mock_fetch):
-        mock_fetch.return_value = MOCK_METADATA
-        agent = DescriptiveAgent(client=MagicMock())
-        result = agent.run(SAMPLE_BOOKS_WITH_SYNOPSIS)
+    def test_returns_fichas(self):
+        raw = json.dumps({"fichas": SAMPLE_FICHAS})
+        agent = _make_descriptive(raw)
+        result = agent.run(SAMPLE_TOP5)
+        assert len(result["fichas"]) == 5
+        assert result["fichas"][0]["titulo"] == "Supremacia da Máquina"
+        assert "sinopse" in result["fichas"][0]
+        assert "opinioes_amazon" in result["fichas"][0]
 
-        assert len(result["books"]) == 5
-        for book in result["books"]:
-            assert book["isbn"] == "978-0132350884"
-            assert book["publisher"] == "Prentice Hall"
-            assert "synopsis" in book  # original fields preserved
+    def test_rejects_empty_fichas(self):
+        raw = json.dumps({"fichas": []})
+        agent = _make_descriptive(raw)
+        with pytest.raises(ValueError, match="at least one ficha"):
+            agent.run(SAMPLE_TOP5)
 
-    @patch("agents.descriptive.fetch_google_books_metadata")
-    def test_handles_empty_metadata(self, mock_fetch):
-        empty = {
-            "isbn": None,
-            "publisher": None,
-            "page_count": None,
-            "description": None,
-            "thumbnail": None,
-            "info_link": None,
-        }
-        mock_fetch.return_value = empty
-        agent = DescriptiveAgent(client=MagicMock())
-        result = agent.run(SAMPLE_BOOKS_WITH_SYNOPSIS[:1])
+    def test_rejects_missing_keys(self):
+        bad = [{"titulo": "X", "sinopse": "ok"}]
+        raw = json.dumps({"fichas": bad})
+        agent = _make_descriptive(raw)
+        with pytest.raises(ValueError, match="missing keys"):
+            agent.run(SAMPLE_TOP5)
 
-        assert result["books"][0]["isbn"] is None
-        assert result["books"][0]["title"] == "Clean Code"
+    def test_temperature(self):
+        assert DescriptiveAgent.temperature == 0.4
 
-    @patch("agents.descriptive.fetch_google_books_metadata")
-    def test_calls_fetch_for_each_book(self, mock_fetch):
-        mock_fetch.return_value = MOCK_METADATA
-        agent = DescriptiveAgent(client=MagicMock())
-        agent.run(SAMPLE_BOOKS_WITH_SYNOPSIS[:3])
-
-        assert mock_fetch.call_count == 3
+    def test_pt_br_in_system_prompt(self):
+        assert "português do Brasil" in DescriptiveAgent.system_prompt

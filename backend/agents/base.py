@@ -1,13 +1,18 @@
-"""Base agent class following the TranslateMyPrompt architecture pattern."""
+"""Base agent class following the BookMatch pipeline architecture."""
 
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from google import genai
 
 import config
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 2
 
 
 def _get_client() -> genai.Client:
@@ -28,10 +33,11 @@ def _sanitize_json(raw: str) -> str:
 class BaseAgent:
     """Abstract base for every AI agent in the pipeline.
 
-    Sub-classes must set ``system_prompt`` and implement ``_parse_response``.
+    Sub-classes must set ``system_prompt`` and may override ``temperature``.
     """
 
     system_prompt: str = ""
+    temperature: float = 0.3
 
     def __init__(self, client: genai.Client | None = None) -> None:
         self.client = client or _get_client()
@@ -42,7 +48,8 @@ class BaseAgent:
             contents=user_prompt,
             config=genai.types.GenerateContentConfig(
                 system_instruction=self.system_prompt,
-                temperature=0.7,
+                temperature=self.temperature,
+                response_mime_type="application/json",
             ),
         )
         return response.text or ""
@@ -51,5 +58,12 @@ class BaseAgent:
         return json.loads(_sanitize_json(raw))
 
     def run(self, user_prompt: str) -> Any:
-        raw = self._call_model(user_prompt)
-        return self._parse_response(raw)
+        last_error: Exception | None = None
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                raw = self._call_model(user_prompt)
+                return self._parse_response(raw)
+            except Exception as exc:
+                logger.warning("Attempt %d failed: %s", attempt, exc)
+                last_error = exc
+        raise last_error  # type: ignore[misc]

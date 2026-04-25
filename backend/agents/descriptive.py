@@ -1,28 +1,67 @@
-"""Descriptive Agent — enriches books with metadata from external sources."""
+"""Descriptive Agent — builds complete pt-BR fact sheets for each recommended item."""
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from agents.base import BaseAgent
-from services.google_books import fetch_google_books_metadata
 
 
 class DescriptiveAgent(BaseAgent):
-    """Fetches additional metadata for each book from Google Books (and Amazon when available)."""
+    """Creates rich fact sheets (sinopse, faixa etária, temas, simulated
+    Amazon reviews, and where to buy) for each recommended item.
+    All output is in Brazilian Portuguese."""
 
-    system_prompt = ""  # Not used — this agent relies on API calls, not LLM.
+    temperature = 0.4
 
-    def run(self, books: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-        enriched: list[dict[str, Any]] = []
-        for book in books:
-            metadata = fetch_google_books_metadata(
-                title=book.get("title", ""),
-                author=book.get("author", ""),
-            )
-            merged = {**book, **metadata}
-            enriched.append(merged)
-        return {"books": enriched}
+    system_prompt = (
+        "Você é o Agente Descritivo do BookMatch, sistema de recomendação de leituras.\n\n"
+        "Sua função é criar fichas completas e ricas para cada mídia recomendada. "
+        "Essas fichas ajudam o usuário a decidir se aquela obra é para ele antes de comprar.\n\n"
+        "REGRAS ABSOLUTAS:\n"
+        "1. Responda SOMENTE com JSON puro e válido. Sem texto antes ou depois.\n"
+        '2. O array "fichas" deve ter EXATAMENTE a mesma quantidade de itens do '
+        "Top 5 recebido, na mesma ordem.\n"
+        '3. "sinopse": entre 3 e 4 frases. Tom convidativo, não técnico.\n'
+        '4. "faixa_etaria": string descritiva. Ex: "A partir de 16 anos", "Adultos", '
+        '"14+", "Todos os públicos".\n'
+        '5. "temas": array com 3 a 6 strings curtas das temáticas centrais.\n'
+        '6. "opinioes_amazon": EXATAMENTE 2 opiniões SIMULADAS de forma realista:\n'
+        "   - Escritas em 1ª pessoa, como um leitor real escreveria\n"
+        "   - Entre 1 e 3 frases cada\n"
+        "   - Estrelas realistas — NÃO coloque 5 em tudo. Varie entre 3 e 5.\n"
+        "   - Reflita pontos fortes reais da obra, não elogios genéricos.\n"
+        "   ATENÇÃO: são opiniões simuladas pois não há acesso à API da Amazon.\n"
+        '7. "onde_encontrar": plataformas reais separadas por vírgula. '
+        'Ex: "Amazon, Kindle, Livraria Cultura, Estante Virtual".\n'
+        "8. Escreva em português do Brasil.\n"
+    )
 
-    def _parse_response(self, raw: str) -> Any:
-        raise NotImplementedError("DescriptiveAgent does not use LLM responses")
+    def run(self, top5: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+        prompt = (
+            "Monte fichas completas para cada uma das seguintes mídias:\n"
+            f"TOP 5: {json.dumps(top5, ensure_ascii=False)}\n\n"
+            "Para cada obra, crie:\n"
+            "- Sinopse de 3-4 frases convidativa\n"
+            "- Faixa etária recomendada\n"
+            "- 3 a 6 temas centrais da obra\n"
+            "- 2 opiniões simuladas de leitores Amazon (realistas, variadas, 1ª pessoa)\n"
+            "- Plataformas onde encontrar no Brasil\n\n"
+            "Seja específico e fiel às características reais de cada obra.\n"
+            "Não use descrições genéricas."
+        )
+        raw = self._call_model(prompt)
+        return self._parse_response(raw)
+
+    def _parse_response(self, raw: str) -> dict[str, list[dict[str, Any]]]:
+        data: dict[str, Any] = super()._parse_response(raw)
+        fichas = data.get("fichas", [])
+        if not isinstance(fichas, list) or len(fichas) == 0:
+            raise ValueError("Descriptive Agent must return at least one ficha")
+        required_keys = {"titulo", "sinopse", "faixa_etaria", "temas", "opinioes_amazon", "onde_encontrar"}
+        for ficha in fichas:
+            missing = required_keys - set(ficha.keys())
+            if missing:
+                raise ValueError(f"Ficha '{ficha.get('titulo', '?')}' missing keys: {missing}")
+        return {"fichas": fichas}

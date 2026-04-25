@@ -8,49 +8,45 @@ from unittest.mock import MagicMock
 import pytest
 
 from agents.researcher import ResearcherAgent
-from tests.conftest import SAMPLE_BOOKS
+from tests.conftest import SAMPLE_TOP5, SAMPLE_TOPICOS
 
 
-def _make_agent(response_text: str) -> ResearcherAgent:
+def _make_researcher(response_text: str) -> ResearcherAgent:
     mock_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.text = response_text
-    mock_client.models.generate_content.return_value = mock_response
+    resp = MagicMock()
+    resp.text = response_text
+    mock_client.models.generate_content.return_value = resp
     return ResearcherAgent(client=mock_client)
 
 
 class TestResearcherAgent:
-    def test_returns_books(self):
-        agent = _make_agent(json.dumps({"books": SAMPLE_BOOKS}))
-        result = agent.run(["subj1", "subj2"], ["book"])
-        assert len(result["books"]) == 5
-        assert result["books"][0]["title"] == "Clean Code"
+    def test_returns_top5(self):
+        raw = json.dumps({"top5": SAMPLE_TOP5})
+        agent = _make_researcher(raw)
+        result = agent.run(SAMPLE_TOPICOS, ["livro"])
+        assert len(result["top5"]) == 5
+        assert result["top5"][0]["titulo"] == "Supremacia da Máquina"
 
-    def test_raises_on_empty_books(self):
-        agent = _make_agent(json.dumps({"books": []}))
-        with pytest.raises(ValueError, match="at least one book"):
-            agent.run(["subj1"], ["book"])
+    def test_rejects_wrong_count(self):
+        raw = json.dumps({"top5": SAMPLE_TOP5[:3]})
+        agent = _make_researcher(raw)
+        with pytest.raises(ValueError, match="exactly 5"):
+            agent.run(SAMPLE_TOPICOS, ["livro"])
 
-    def test_raises_on_missing_keys(self):
-        bad_book = [{"title": "No Author"}]
-        agent = _make_agent(json.dumps({"books": bad_book}))
+    def test_rejects_missing_keys(self):
+        items = [{"titulo": "X", "autor": "Y"} for _ in range(5)]
+        raw = json.dumps({"top5": items})
+        agent = _make_researcher(raw)
         with pytest.raises(ValueError, match="missing keys"):
-            agent.run(["subj1"], ["book"])
+            agent.run(SAMPLE_TOPICOS, ["livro"])
 
-    def test_prompt_includes_subjects_and_formats(self):
-        mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({"books": SAMPLE_BOOKS})
-        mock_client.models.generate_content.return_value = mock_response
+    def test_temperature(self):
+        assert ResearcherAgent.temperature == 0.2
 
-        agent = ResearcherAgent(client=mock_client)
-        agent.run(["Machine Learning", "Neural Networks"], ["book", "journal"])
-
-        call_args = mock_client.models.generate_content.call_args
-        prompt = call_args.kwargs.get("contents") or call_args[1].get("contents", "")
-        assert "Machine Learning" in prompt
-        assert "journal" in prompt
-
-    def test_system_prompt_is_set(self):
-        agent = ResearcherAgent(client=MagicMock())
-        assert "Researcher Agent" in agent.system_prompt
+    def test_topicos_in_prompt(self):
+        raw = json.dumps({"top5": SAMPLE_TOP5})
+        agent = _make_researcher(raw)
+        agent.run(SAMPLE_TOPICOS, ["livro", "hq"])
+        call_args = agent.client.models.generate_content.call_args
+        prompt = call_args.kwargs["contents"]
+        assert "livro, hq" in prompt
