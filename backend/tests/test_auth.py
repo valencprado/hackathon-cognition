@@ -1,29 +1,5 @@
 """Tests for Section 3 — Backend Authentication."""
 
-import sys
-from pathlib import Path
-
-import pytest
-
-# Ensure the backend package is importable
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from app import create_app  # noqa: E402
-from config import Config  # noqa: E402
-
-
-class TestConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-
-
-@pytest.fixture()
-def client():
-    app = create_app(TestConfig)
-    with app.test_client() as c:
-        with app.app_context():
-            yield c
-
 
 STUDENT_PAYLOAD = {
     "email": "aluno@anhembi.edu.br",
@@ -33,7 +9,7 @@ STUDENT_PAYLOAD = {
 }
 
 
-# ── 3.1 Student authentication ──────────────────────────────────────────
+# -- 3.1 Student authentication -----------------------------------------------
 
 
 class TestStudentRegister:
@@ -70,10 +46,7 @@ class TestStudentLogin:
         client.post("/auth/student/register", json=STUDENT_PAYLOAD)
         resp = client.post(
             "/auth/student/login",
-            json={
-                "email": STUDENT_PAYLOAD["email"],
-                "password": STUDENT_PAYLOAD["password"],
-            },
+            json={"email": STUDENT_PAYLOAD["email"], "password": STUDENT_PAYLOAD["password"]},
         )
         assert resp.status_code == 200
         assert "token" in resp.get_json()
@@ -94,7 +67,7 @@ class TestStudentLogin:
         assert resp.status_code == 401
 
 
-# ── 3.2 Admin authentication ────────────────────────────────────────────
+# -- 3.2 Admin authentication -------------------------------------------------
 
 
 class TestAdminLogin:
@@ -121,15 +94,12 @@ class TestAdminLogin:
         client.post("/auth/student/register", json=STUDENT_PAYLOAD)
         resp = client.post(
             "/auth/admin/login",
-            json={
-                "email": STUDENT_PAYLOAD["email"],
-                "password": STUDENT_PAYLOAD["password"],
-            },
+            json={"email": STUDENT_PAYLOAD["email"], "password": STUDENT_PAYLOAD["password"]},
         )
         assert resp.status_code == 401
 
 
-# ── 3.3 Role-based access control (RBAC) ────────────────────────────────
+# -- 3.3 Role-based access control (RBAC) -------------------------------------
 
 
 class TestRBAC:
@@ -137,10 +107,7 @@ class TestRBAC:
         client.post("/auth/student/register", json=STUDENT_PAYLOAD)
         resp = client.post(
             "/auth/student/login",
-            json={
-                "email": STUDENT_PAYLOAD["email"],
-                "password": STUDENT_PAYLOAD["password"],
-            },
+            json={"email": STUDENT_PAYLOAD["email"], "password": STUDENT_PAYLOAD["password"]},
         )
         return resp.get_json()["token"]
 
