@@ -49,8 +49,10 @@ def create_or_update_map():
 
     if lib_map:
         lib_map.image_url = image_url
-        lib_map.width = data.get("width")
-        lib_map.height = data.get("height")
+        if "width" in data:
+            lib_map.width = data["width"]
+        if "height" in data:
+            lib_map.height = data["height"]
         status = 200
     else:
         lib_map = LibraryMap(
