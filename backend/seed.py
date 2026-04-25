@@ -21,7 +21,7 @@ BOOKS = [
         "isbn": "9788543024974",
         "format_type": "book",
         "synopsis": "Referencia classica em engenharia de software cobrindo processos, modelagem e gerenciamento de projetos.",
-        "location": {"x": 120.0, "y": 340.0, "label": "Estante A3", "floor": "Terreo"},
+        "location": {"x": 120.0, "y": 340.0, "label": "Estante A3", "shelf": "A3-Prateleira 2", "section": "Computacao", "aisle": "Corredor A", "floor": "Terreo"},
     },
     {
         "title": "Estruturas de Dados e Algoritmos em Java",
@@ -30,7 +30,7 @@ BOOKS = [
         "isbn": "9788536501635",
         "format_type": "book",
         "synopsis": "Guia pratico de estruturas de dados com exemplos em Java.",
-        "location": {"x": 200.0, "y": 340.0, "label": "Estante A4", "floor": "Terreo"},
+        "location": {"x": 200.0, "y": 340.0, "label": "Estante A4", "shelf": "A4-Prateleira 1", "section": "Computacao", "aisle": "Corredor A", "floor": "Terreo"},
     },
     {
         "title": "Redes de Computadores",
@@ -39,7 +39,7 @@ BOOKS = [
         "isbn": "9788576059240",
         "format_type": "book",
         "synopsis": "Abordagem abrangente sobre redes de computadores e protocolos de comunicacao.",
-        "location": {"x": 280.0, "y": 200.0, "label": "Estante B1", "floor": "1o Andar"},
+        "location": {"x": 280.0, "y": 200.0, "label": "Estante B1", "shelf": "B1-Prateleira 3", "section": "Redes e Telecomunicacoes", "aisle": "Corredor B", "floor": "1o Andar"},
     },
     {
         "title": "Turma da Monica - Classicos",
@@ -48,7 +48,7 @@ BOOKS = [
         "isbn": "9786555121001",
         "format_type": "comic",
         "synopsis": "Coletanea de historias classicas da Turma da Monica.",
-        "location": {"x": 350.0, "y": 150.0, "label": "Estante C2", "floor": "Terreo"},
+        "location": {"x": 350.0, "y": 150.0, "label": "Estante C2", "shelf": "C2-Prateleira 1", "section": "Quadrinhos e HQs", "aisle": "Corredor C", "floor": "Terreo"},
     },
     {
         "title": "Revista Brasileira de Ciencias Sociais",
@@ -57,7 +57,7 @@ BOOKS = [
         "isbn": None,
         "format_type": "journal",
         "synopsis": "Periodico academico com artigos sobre ciencias sociais no Brasil.",
-        "location": {"x": 400.0, "y": 100.0, "label": "Periodicos P1", "floor": "Terreo"},
+        "location": {"x": 400.0, "y": 100.0, "label": "Periodicos P1", "shelf": "P1-Prateleira 4", "section": "Periodicos Academicos", "aisle": "Corredor P", "floor": "Terreo"},
     },
 ]
 

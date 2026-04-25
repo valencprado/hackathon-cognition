@@ -116,7 +116,7 @@ def update_location(location_id: int):
         return jsonify({"error": "Location not found"}), 404
 
     data = request.get_json(silent=True) or {}
-    for attr in ("x", "y", "label", "floor"):
+    for attr in ("x", "y", "label", "shelf", "section", "aisle", "floor"):
         if attr in data:
             setattr(loc, attr, data[attr])
 

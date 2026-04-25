@@ -72,6 +72,9 @@ def create_book():
             x=loc["x"],
             y=loc["y"],
             label=loc.get("label"),
+            shelf=loc.get("shelf"),
+            section=loc.get("section"),
+            aisle=loc.get("aisle"),
             floor=loc.get("floor"),
         )
         db.session.add(book_loc)
@@ -100,7 +103,7 @@ def update_book(book_id: int):
     loc = data.get("location")
     if loc is not None:
         if book.location:
-            for attr in ("x", "y", "label", "floor"):
+            for attr in ("x", "y", "label", "shelf", "section", "aisle", "floor"):
                 if attr in loc:
                     setattr(book.location, attr, loc[attr])
         elif "x" in loc and "y" in loc:
@@ -109,6 +112,9 @@ def update_book(book_id: int):
                 x=loc["x"],
                 y=loc["y"],
                 label=loc.get("label"),
+                shelf=loc.get("shelf"),
+                section=loc.get("section"),
+                aisle=loc.get("aisle"),
                 floor=loc.get("floor"),
             )
             db.session.add(book_loc)

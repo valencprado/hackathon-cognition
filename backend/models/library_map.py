@@ -30,6 +30,9 @@ class BookLocation(db.Model):
         db.Integer, db.ForeignKey("books.id", ondelete="CASCADE"), nullable=False, unique=True
     )
     label = db.Column(db.String(100), nullable=True)
+    shelf = db.Column(db.String(100), nullable=True)
+    section = db.Column(db.String(100), nullable=True)
+    aisle = db.Column(db.String(50), nullable=True)
     x = db.Column(db.Float, nullable=False)
     y = db.Column(db.Float, nullable=False)
     floor = db.Column(db.String(50), nullable=True)
@@ -41,6 +44,9 @@ class BookLocation(db.Model):
             "id": self.id,
             "book_id": self.book_id,
             "label": self.label,
+            "shelf": self.shelf,
+            "section": self.section,
+            "aisle": self.aisle,
             "x": self.x,
             "y": self.y,
             "floor": self.floor,
