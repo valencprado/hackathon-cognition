@@ -98,6 +98,8 @@ def update_book(book_id: int):
 
     for field in ("title", "author", "year", "isbn", "format_type", "synopsis"):
         if field in data:
+            if field in ("title", "author") and not data[field]:
+                return jsonify({"error": f"{field} cannot be empty"}), 400
             setattr(book, field, data[field])
 
     loc = data.get("location")
@@ -139,7 +141,7 @@ def _validate_book(data: dict) -> list[str]:
     """Validate and normalize required book fields in-place."""
     errors = []
     for field in ("tenant", "title", "author"):
-        val = (data.get(field) or "").strip()
+        val = str(data.get(field) or "").strip()
         data[field] = val
         if not val:
             errors.append(f"{field} is required")
