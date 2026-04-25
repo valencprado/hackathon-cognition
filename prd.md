@@ -23,7 +23,7 @@ The chatbot will be built with AI Agents based on this project: [https://deepwik
 1. Professor Agent: researches the topic by defining 4 essential subjects
 2. Researcher Agent: based on the subjects, searches for books according to format types (comics) and selects 5 books
 3. Educator Agent: creates a short "synopsis" for each book
-4. Descriptive Agent: fetches metadata from the internet
+4. Descriptive Agent: fetches metadata from the internet (Amazon)
 
 Its frontend will be created in React. Our database now is the internet, so we'll use Google Books API.
 
