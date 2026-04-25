@@ -2,21 +2,33 @@
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 import pytest
 
 # Ensure the backend package root is on sys.path so bare imports work
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from app import app as flask_app  # noqa: E402
+from app import create_app  # noqa: E402
+from auth.models import db  # noqa: E402
+from config import Config  # noqa: E402
+
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
 
 @pytest.fixture()
-def client():
-    flask_app.config["TESTING"] = True
-    with flask_app.test_client() as c:
+def app():
+    application = create_app(TestConfig)
+    yield application
+
+
+@pytest.fixture()
+def client(app):
+    with app.test_client() as c:
         yield c
 
 
