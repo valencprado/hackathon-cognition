@@ -130,13 +130,13 @@ def delete_book(book_id: int):
 
 
 def _validate_book(data: dict) -> list[str]:
+    """Validate and normalize required book fields in-place."""
     errors = []
-    if not (data.get("tenant") or "").strip():
-        errors.append("tenant is required")
-    if not (data.get("title") or "").strip():
-        errors.append("title is required")
-    if not (data.get("author") or "").strip():
-        errors.append("author is required")
+    for field in ("tenant", "title", "author"):
+        val = (data.get(field) or "").strip()
+        data[field] = val
+        if not val:
+            errors.append(f"{field} is required")
 
     fmt = data.get("format_type", "book")
     if fmt not in ("book", "comic", "journal"):
