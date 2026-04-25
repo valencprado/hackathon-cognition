@@ -16,6 +16,12 @@ const modalContent     = document.getElementById('modalContent');
 const modalClose       = document.getElementById('modalClose');
 
 // ---- HELPERS ----
+function esc(str) {
+  const el = document.createElement('span');
+  el.textContent = str;
+  return el.innerHTML;
+}
+
 function formatEmoji(formato) {
   const map = { livro: '\u{1F4D8}', revista: '\u{1F4F0}', hq: '\u{1F3A8}', dvd: '\u{1F3AC}' };
   return map[(formato || '').toLowerCase()] || '\u{1F4D8}';
@@ -38,7 +44,7 @@ function popularityFromRating(nota) {
 }
 
 function popularityDot(level) {
-  const map = { 'Alta': 'pop-high', 'M\u00E9dia': 'pop-mid', 'Baixa': 'pop-low' };
+  const map = { 'Alta': 'alta', 'M\u00E9dia': 'm\u00E9dia', 'Baixa': 'baixa' };
   return `<span class="pop-dot ${map[level] || ''}"></span><span>${level} procura</span>`;
 }
 
@@ -104,9 +110,9 @@ function renderResults(books) {
     <div class="result-item" style="animation-delay:${0.05 + i * 0.07}s">
       <div class="book-cover-placeholder">${b.emoji}</div>
       <div class="item-body">
-        <div class="item-type">${b.type}</div>
-        <div class="item-title">${b.title}</div>
-        <div class="item-author">${b.author}</div>
+        <div class="item-type">${esc(b.type)}</div>
+        <div class="item-title">${esc(b.title)}</div>
+        <div class="item-author">${esc(b.author)}</div>
         <div class="item-meta">
           <div class="item-popularity">${popularityDot(b.popularity)}</div>
           ${b.nota_amazon ? `<span class="avail avail-ok">\u2B50 ${b.nota_amazon} Amazon</span>` : ''}
@@ -126,7 +132,7 @@ function renderResults(books) {
 function renderError(message) {
   resultsList.innerHTML = `
     <div class="result-item" style="text-align:center;padding:32px;">
-      <p style="color:var(--text-muted);font-size:15px;">${message}</p>
+      <p style="color:var(--text-muted);font-size:15px;">${esc(message)}</p>
     </div>
   `;
 }
@@ -141,12 +147,12 @@ function openModal(id, encodedBooks) {
     <div class="modal-cover-wrap">
       <div class="modal-cover">${b.emoji}</div>
       <div class="modal-meta-block">
-        <div class="modal-type">${b.type}</div>
-        <h2 class="modal-title">${b.title}</h2>
-        <p class="modal-author">${b.author}</p>
+        <div class="modal-type">${esc(b.type)}</div>
+        <h2 class="modal-title">${esc(b.title)}</h2>
+        <p class="modal-author">${esc(b.author)}</p>
         <div class="modal-popularity">${popularityDot(b.popularity)}</div>
         <div class="modal-badges">
-          ${b.level ? `<span class="modal-badge">${b.level}</span>` : ''}
+          ${b.level ? `<span class="modal-badge">${esc(b.level)}</span>` : ''}
           ${b.nota_amazon ? `<span class="modal-badge">\u2B50 ${b.nota_amazon}</span>` : ''}
         </div>
       </div>
@@ -154,39 +160,39 @@ function openModal(id, encodedBooks) {
 
     <div class="modal-section">
       <div class="modal-section-title">Sobre</div>
-      <p class="modal-description">${b.description}</p>
+      <p class="modal-description">${esc(b.description)}</p>
     </div>
 
     ${b.resumo ? `
     <div class="modal-section">
       <div class="modal-section-title">Por que ler</div>
-      <p class="modal-description">${b.resumo}</p>
+      <p class="modal-description">${esc(b.resumo)}</p>
     </div>
     ` : ''}
 
     ${b.conexao_tema ? `
     <div class="modal-section">
       <div class="modal-section-title">Conex\u00E3o com o tema</div>
-      <p class="modal-description">${b.conexao_tema}</p>
+      <p class="modal-description">${esc(b.conexao_tema)}</p>
     </div>
     ` : ''}
 
     <div class="modal-section">
       <div class="modal-section-title">Assuntos</div>
       <div class="modal-topics">
-        ${b.tags.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+        ${b.tags.map(t => `<span class="topic-tag">${esc(t)}</span>`).join('')}
       </div>
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Onde Encontrar</div>
-      <div class="modal-location-card">
+      <div class="location-card">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" stroke-width="2"/>
           <circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/>
         </svg>
         <div>
-          <span class="location-main">${b.location}</span>
+          <span class="location-main">${esc(b.location)}</span>
         </div>
       </div>
     </div>
@@ -197,7 +203,7 @@ function openModal(id, encodedBooks) {
         ${b.level ? `
         <div class="info-cell">
           <span class="info-label">Faixa et\u00E1ria</span>
-          <span class="info-value">${b.level}</span>
+          <span class="info-value">${esc(b.level)}</span>
         </div>
         ` : ''}
         ${b.nota_amazon ? `
@@ -215,7 +221,7 @@ function openModal(id, encodedBooks) {
         ${b.topico_principal ? `
         <div class="info-cell">
           <span class="info-label">T\u00F3pico</span>
-          <span class="info-value">${b.topico_principal}</span>
+          <span class="info-value">${esc(b.topico_principal)}</span>
         </div>
         ` : ''}
       </div>
