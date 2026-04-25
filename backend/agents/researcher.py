@@ -32,7 +32,7 @@ class ResearcherAgent(BaseAgent):
     def run(self, topicos: list[str], formats: list[str]) -> dict[str, list[dict[str, Any]]]:
         prompt = (
             "Com base nos tópicos identificados pelo Agente Professor:\n\n"
-            f"TÓPICOS: {topicos}\n\n"
+            f"TÓPICOS: {', '.join(topicos)}\n\n"
             "FORMATOS PERMITIDOS (só inclua mídias nestes formatos):\n"
             f"{', '.join(formats)}\n\n"
             "Monte um TOP 5 de mídias REAIS que melhor cobrem esses tópicos.\n"

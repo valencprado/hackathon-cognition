@@ -12,7 +12,7 @@ import config
 
 logger = logging.getLogger(__name__)
 
-MAX_RETRIES = 2
+MAX_ATTEMPTS = 2
 
 
 def _get_client() -> genai.Client:
@@ -62,7 +62,7 @@ class BaseAgent:
     def _run_with_retry(self, prompt: str) -> Any:
         """Call the model and parse the response, retrying on failure."""
         last_error: Exception | None = None
-        for attempt in range(1, MAX_RETRIES + 1):
+        for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
                 raw = self._call_model(prompt)
                 return self._parse_response(raw)

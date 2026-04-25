@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agents.base import BaseAgent, _sanitize_json, MAX_RETRIES
+from agents.base import BaseAgent, _sanitize_json, MAX_ATTEMPTS
 
 
 class TestSanitizeJson:
@@ -80,7 +80,7 @@ class TestBaseAgent:
         agent = BaseAgent(client=mock_client)
         with pytest.raises(Exception, match="fail"):
             agent.run("test")
-        assert mock_client.models.generate_content.call_count == MAX_RETRIES
+        assert mock_client.models.generate_content.call_count == MAX_ATTEMPTS
 
     def test_empty_response_raises(self):
         mock_client = MagicMock()
