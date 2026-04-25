@@ -40,6 +40,11 @@ class TestProfessorAgent:
         result = agent.run("query")
         assert result == {"subjects": ["1", "2", "3", "4"]}
 
+    def test_raises_on_non_list_subjects(self):
+        agent = _make_agent(json.dumps({"subjects": 42}))
+        with pytest.raises(ValueError, match="exactly 4 subjects"):
+            agent.run("query")
+
     def test_system_prompt_is_set(self):
         agent = ProfessorAgent(client=MagicMock())
         assert "Professor Agent" in agent.system_prompt

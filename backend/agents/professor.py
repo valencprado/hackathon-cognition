@@ -25,6 +25,6 @@ class ProfessorAgent(BaseAgent):
         subjects = data.get("subjects", [])
         if not isinstance(subjects, list) or len(subjects) != 4:
             raise ValueError(
-                f"Professor Agent must return exactly 4 subjects, got {len(subjects)}"
+                f"Professor Agent must return exactly 4 subjects, got {subjects!r}"
             )
         return {"subjects": [str(s) for s in subjects]}
