@@ -41,8 +41,7 @@ class EducatorAgent(BaseAgent):
             "conversa diretamente com a necessidade do usuário. Seja específico — o "
             "usuário precisa entender POR QUE aquela obra é boa para ele."
         )
-        raw = self._call_model(prompt)
-        return self._parse_response(raw)
+        return self._run_with_retry(prompt)
 
     def _parse_response(self, raw: str) -> dict[str, list[dict[str, Any]]]:
         data: dict[str, Any] = super()._parse_response(raw)

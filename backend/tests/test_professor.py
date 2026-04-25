@@ -61,3 +61,15 @@ class TestProfessorAgent:
         call_args = agent.client.models.generate_content.call_args
         prompt = call_args.kwargs["contents"]
         assert "livro, hq" in prompt
+
+    def test_retry_on_failure(self):
+        good_response = json.dumps({"topicos": SAMPLE_TOPICOS, "analise": SAMPLE_ANALISE})
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = [
+            Exception("transient error"),
+            MagicMock(text=good_response),
+        ]
+        agent = ProfessorAgent(client=mock_client)
+        result = agent.run("test", ["livro"])
+        assert result["topicos"] == SAMPLE_TOPICOS
+        assert mock_client.models.generate_content.call_count == 2

@@ -36,8 +36,7 @@ class ProfessorAgent(BaseAgent):
             "Identifique os 4 tópicos mais importantes que vão guiar a busca.\n"
             "Os tópicos precisam ser úteis para encontrar livros, revistas ou HQs reais."
         )
-        raw = self._call_model(prompt)
-        return self._parse_response(raw)
+        return self._run_with_retry(prompt)
 
     def _parse_response(self, raw: str) -> dict[str, Any]:
         data: dict[str, Any] = super()._parse_response(raw)

@@ -38,8 +38,7 @@ class ResearcherAgent(BaseAgent):
             "Monte um TOP 5 de mídias REAIS que melhor cobrem esses tópicos.\n"
             "Varie as abordagens: uma mais técnica, uma mais narrativa, etc."
         )
-        raw = self._call_model(prompt)
-        return self._parse_response(raw)
+        return self._run_with_retry(prompt)
 
     def _parse_response(self, raw: str) -> dict[str, list[dict[str, Any]]]:
         data: dict[str, Any] = super()._parse_response(raw)

@@ -34,6 +34,8 @@ class BaseAgent:
     """Abstract base for every AI agent in the pipeline.
 
     Sub-classes must set ``system_prompt`` and may override ``temperature``.
+    They should call ``_run_with_retry(prompt)`` to get automatic retry
+    handling around the LLM call + response parsing.
     """
 
     system_prompt: str = ""
@@ -57,13 +59,17 @@ class BaseAgent:
     def _parse_response(self, raw: str) -> Any:
         return json.loads(_sanitize_json(raw))
 
-    def run(self, user_prompt: str) -> Any:
+    def _run_with_retry(self, prompt: str) -> Any:
+        """Call the model and parse the response, retrying on failure."""
         last_error: Exception | None = None
         for attempt in range(1, MAX_RETRIES + 1):
             try:
-                raw = self._call_model(user_prompt)
+                raw = self._call_model(prompt)
                 return self._parse_response(raw)
             except Exception as exc:
                 logger.warning("Attempt %d failed: %s", attempt, exc)
                 last_error = exc
         raise last_error  # type: ignore[misc]
+
+    def run(self, user_prompt: str) -> Any:
+        return self._run_with_retry(user_prompt)
