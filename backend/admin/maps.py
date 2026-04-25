@@ -38,10 +38,10 @@ def create_or_update_map():
     """
     data = request.get_json(silent=True) or {}
 
-    tenant = data.get("tenant", "").strip()
+    tenant = (data.get("tenant") or "").strip()
     if not tenant:
         return jsonify({"error": "tenant is required"}), 400
-    image_url = data.get("image_url", "").strip()
+    image_url = (data.get("image_url") or "").strip()
     if not image_url:
         return jsonify({"error": "image_url is required"}), 400
 

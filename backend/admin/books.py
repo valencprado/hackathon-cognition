@@ -131,11 +131,11 @@ def delete_book(book_id: int):
 
 def _validate_book(data: dict) -> list[str]:
     errors = []
-    if not data.get("tenant", "").strip():
+    if not (data.get("tenant") or "").strip():
         errors.append("tenant is required")
-    if not data.get("title", "").strip():
+    if not (data.get("title") or "").strip():
         errors.append("title is required")
-    if not data.get("author", "").strip():
+    if not (data.get("author") or "").strip():
         errors.append("author is required")
 
     fmt = data.get("format_type", "book")

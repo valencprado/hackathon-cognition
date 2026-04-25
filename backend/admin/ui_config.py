@@ -40,11 +40,11 @@ def create_config():
     """
     data = request.get_json(silent=True) or {}
 
-    tenant = data.get("tenant", "").strip()
+    tenant = (data.get("tenant") or "").strip()
     if not tenant:
         return jsonify({"error": "tenant is required"}), 400
 
-    university_name = data.get("university_name", "").strip()
+    university_name = (data.get("university_name") or "").strip()
     if not university_name:
         return jsonify({"error": "university_name is required"}), 400
 
