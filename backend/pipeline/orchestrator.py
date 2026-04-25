@@ -59,7 +59,6 @@ class Orchestrator:
                 merged["sinopse"] = fichas[i].get("sinopse", "")
                 merged["faixa_etaria"] = fichas[i].get("faixa_etaria", "")
                 merged["temas"] = fichas[i].get("temas", [])
-                merged["opinioes_amazon"] = fichas[i].get("opinioes_amazon", [])
                 merged["onde_encontrar"] = fichas[i].get("onde_encontrar", "")
             books.append(merged)
 
