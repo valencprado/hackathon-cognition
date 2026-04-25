@@ -122,5 +122,5 @@ class TestFetchGoogleBooksMetadata:
         mock_get.return_value = mock_resp
 
         result = fetch_google_books_metadata("T", "A")
-        # First match wins — ISBN_10 appears first
-        assert result["isbn"] == "111"
+        # ISBN_13 is preferred over ISBN_10 even when ISBN_10 appears first
+        assert result["isbn"] == "222"

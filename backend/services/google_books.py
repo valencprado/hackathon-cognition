@@ -45,9 +45,12 @@ def fetch_google_books_metadata(title: str, author: str) -> dict[str, Any]:
 
     isbn = None
     for ident in volume.get("industryIdentifiers", []):
-        if ident.get("type") in ("ISBN_13", "ISBN_10"):
+        id_type = ident.get("type")
+        if id_type == "ISBN_13":
             isbn = ident["identifier"]
             break
+        if id_type == "ISBN_10" and isbn is None:
+            isbn = ident["identifier"]
 
     return {
         "isbn": isbn,
