@@ -13,7 +13,7 @@ from agents.descriptive import DescriptiveAgent
 
 
 class Orchestrator:
-    """Runs the full AI pipeline and returns the top 3 enriched books."""
+    """Runs the full BookMatch AI pipeline and returns the top 3 enriched items."""
 
     def __init__(self, client: genai.Client | None = None) -> None:
         self.professor = ProfessorAgent(client=client)
@@ -29,28 +29,42 @@ class Orchestrator:
         query:
             Natural-language query from the student.
         formats:
-            List of format filters (e.g. ``["book", "journal"]``).
+            List of format filters (e.g. ``["livro", "hq"]``).
 
         Returns
         -------
-        dict with ``subjects`` (list[str]) and ``books`` (list[dict]) —
-        the top 3 enriched books.
+        dict with ``topicos``, ``analise``, and ``books`` (list of up to 3
+        enriched items with resumo, conexao_tema, and full ficha data).
         """
-        professor_result = self.professor.run(query)
-        subjects: list[str] = professor_result["subjects"]
+        professor_result = self.professor.run(query, formats)
+        topicos: list[str] = professor_result["topicos"]
+        analise: str = professor_result["analise"]
 
-        researcher_result = self.researcher.run(subjects, formats)
-        candidate_books: list[dict[str, Any]] = researcher_result["books"]
+        researcher_result = self.researcher.run(topicos, formats)
+        top5: list[dict[str, Any]] = researcher_result["top5"]
 
-        educator_result = self.educator.run(candidate_books)
-        books_with_synopsis: list[dict[str, Any]] = educator_result["books"]
+        educator_result = self.educator.run(query, top5)
+        resumos: list[dict[str, Any]] = educator_result["resumos"]
 
-        descriptive_result = self.descriptive.run(books_with_synopsis)
-        enriched_books: list[dict[str, Any]] = descriptive_result["books"]
+        descriptive_result = self.descriptive.run(top5)
+        fichas: list[dict[str, Any]] = descriptive_result["fichas"]
 
-        top_books = enriched_books[:3]
+        books: list[dict[str, Any]] = []
+        for i, item in enumerate(top5[:3]):
+            merged = {**item}
+            if i < len(resumos):
+                merged["resumo"] = resumos[i].get("resumo", "")
+                merged["conexao_tema"] = resumos[i].get("conexao_tema", "")
+            if i < len(fichas):
+                merged["sinopse"] = fichas[i].get("sinopse", "")
+                merged["faixa_etaria"] = fichas[i].get("faixa_etaria", "")
+                merged["temas"] = fichas[i].get("temas", [])
+                merged["opinioes_amazon"] = fichas[i].get("opinioes_amazon", [])
+                merged["onde_encontrar"] = fichas[i].get("onde_encontrar", "")
+            books.append(merged)
 
         return {
-            "subjects": subjects,
-            "books": top_books,
+            "topicos": topicos,
+            "analise": analise,
+            "books": books,
         }

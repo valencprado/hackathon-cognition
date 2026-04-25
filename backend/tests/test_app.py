@@ -5,90 +5,72 @@ from __future__ import annotations
 import json
 from unittest.mock import patch, MagicMock
 
-from tests.conftest import SAMPLE_SUBJECTS, SAMPLE_BOOKS_WITH_SYNOPSIS
+import pytest
 
-
-MOCK_METADATA = {
-    "isbn": "978-0132350884",
-    "publisher": "Prentice Hall",
-    "page_count": 464,
-    "description": "Description.",
-    "thumbnail": "http://thumb.jpg",
-    "info_link": "http://info",
-}
+from tests.conftest import SAMPLE_TOPICOS, SAMPLE_ANALISE, SAMPLE_TOP5
 
 
 class TestHealthEndpoint:
     def test_health_returns_ok(self, client):
-        resp = client.get("/health")
-        assert resp.status_code == 200
-        assert resp.get_json() == {"status": "ok"}
+        rv = client.get("/health")
+        assert rv.status_code == 200
+        assert rv.get_json() == {"status": "ok"}
 
 
 class TestSearchEndpoint:
-    def test_missing_query_returns_400(self, client):
-        resp = client.post("/search", json={})
-        assert resp.status_code == 400
-        assert "error" in resp.get_json()
-
     def test_empty_query_returns_400(self, client):
-        resp = client.post("/search", json={"query": "   "})
-        assert resp.status_code == 400
+        rv = client.post("/search", json={"query": ""})
+        assert rv.status_code == 400
+        assert rv.get_json()["error"] == "Query is required"
+
+    def test_whitespace_query_returns_400(self, client):
+        rv = client.post("/search", json={"query": "   "})
+        assert rv.status_code == 400
 
     def test_no_body_returns_400(self, client):
-        resp = client.post("/search", content_type="application/json", data="")
-        assert resp.status_code == 400
+        rv = client.post("/search", content_type="application/json", data="{}")
+        assert rv.status_code == 400
 
     @patch("app.Orchestrator")
-    def test_successful_search(self, MockOrch, client):
-        mock_instance = MagicMock()
-        mock_instance.run.return_value = {
-            "subjects": SAMPLE_SUBJECTS,
-            "books": SAMPLE_BOOKS_WITH_SYNOPSIS[:3],
+    def test_success(self, mock_orch_cls, client):
+        mock_orch = MagicMock()
+        mock_orch.run.return_value = {
+            "topicos": SAMPLE_TOPICOS,
+            "analise": SAMPLE_ANALISE,
+            "books": SAMPLE_TOP5[:3],
         }
-        MockOrch.return_value = mock_instance
+        mock_orch_cls.return_value = mock_orch
 
-        resp = client.post("/search", json={"query": "software engineering"})
-        assert resp.status_code == 200
-
-        data = resp.get_json()
-        assert len(data["subjects"]) == 4
+        rv = client.post("/search", json={"query": "IA"})
+        assert rv.status_code == 200
+        data = rv.get_json()
+        assert data["topicos"] == SAMPLE_TOPICOS
         assert len(data["books"]) == 3
 
     @patch("app.Orchestrator")
-    def test_search_with_formats(self, MockOrch, client):
-        mock_instance = MagicMock()
-        mock_instance.run.return_value = {
-            "subjects": SAMPLE_SUBJECTS,
-            "books": SAMPLE_BOOKS_WITH_SYNOPSIS[:3],
-        }
-        MockOrch.return_value = mock_instance
-
-        resp = client.post(
-            "/search",
-            json={"query": "AI", "formats": ["journal", "comic"]},
-        )
-        assert resp.status_code == 200
-        mock_instance.run.assert_called_once_with("AI", ["journal", "comic"])
-
-    @patch("app.Orchestrator")
-    def test_search_exception_returns_500(self, MockOrch, client):
-        mock_instance = MagicMock()
-        mock_instance.run.side_effect = RuntimeError("boom")
-        MockOrch.return_value = mock_instance
-
-        resp = client.post("/search", json={"query": "test"})
-        assert resp.status_code == 500
-        assert "boom" in resp.get_json()["error"]
-
-    @patch("app.Orchestrator")
-    def test_default_formats_used(self, MockOrch, client):
-        mock_instance = MagicMock()
-        mock_instance.run.return_value = {
-            "subjects": SAMPLE_SUBJECTS,
-            "books": [],
-        }
-        MockOrch.return_value = mock_instance
+    def test_default_formats(self, mock_orch_cls, client):
+        mock_orch = MagicMock()
+        mock_orch.run.return_value = {"topicos": [], "analise": "", "books": []}
+        mock_orch_cls.return_value = mock_orch
 
         client.post("/search", json={"query": "test"})
-        mock_instance.run.assert_called_once_with("test", ["book", "journal", "comic"])
+        mock_orch.run.assert_called_once_with("test", ["livro", "revista", "hq"])
+
+    @patch("app.Orchestrator")
+    def test_custom_formats(self, mock_orch_cls, client):
+        mock_orch = MagicMock()
+        mock_orch.run.return_value = {"topicos": [], "analise": "", "books": []}
+        mock_orch_cls.return_value = mock_orch
+
+        client.post("/search", json={"query": "test", "formats": ["livro", "hq"]})
+        mock_orch.run.assert_called_once_with("test", ["livro", "hq"])
+
+    @patch("app.Orchestrator")
+    def test_orchestrator_error(self, mock_orch_cls, client):
+        mock_orch = MagicMock()
+        mock_orch.run.side_effect = RuntimeError("API down")
+        mock_orch_cls.return_value = mock_orch
+
+        rv = client.post("/search", json={"query": "test"})
+        assert rv.status_code == 500
+        assert "API down" in rv.get_json()["error"]

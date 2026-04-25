@@ -8,49 +8,51 @@ from unittest.mock import MagicMock
 import pytest
 
 from agents.educator import EducatorAgent
-from tests.conftest import SAMPLE_BOOKS, SAMPLE_BOOKS_WITH_SYNOPSIS
+from tests.conftest import SAMPLE_TOP5, SAMPLE_RESUMOS
 
 
-def _make_agent(response_text: str) -> EducatorAgent:
+def _make_educator(response_text: str) -> EducatorAgent:
     mock_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.text = response_text
-    mock_client.models.generate_content.return_value = mock_response
+    resp = MagicMock()
+    resp.text = response_text
+    mock_client.models.generate_content.return_value = resp
     return EducatorAgent(client=mock_client)
 
 
 class TestEducatorAgent:
-    def test_returns_books_with_synopsis(self):
-        agent = _make_agent(json.dumps({"books": SAMPLE_BOOKS_WITH_SYNOPSIS}))
-        result = agent.run(SAMPLE_BOOKS)
-        assert len(result["books"]) == 5
-        for book in result["books"]:
-            assert "synopsis" in book
+    def test_returns_resumos(self):
+        raw = json.dumps({"resumos": SAMPLE_RESUMOS})
+        agent = _make_educator(raw)
+        result = agent.run("quero entender IA", SAMPLE_TOP5)
+        assert len(result["resumos"]) == 5
 
-    def test_raises_on_missing_synopsis(self):
-        books_no_synopsis = [{"title": "Test", "author": "A", "year": 2000, "format": "book"}]
-        agent = _make_agent(json.dumps({"books": books_no_synopsis}))
-        with pytest.raises(ValueError, match="missing synopsis"):
-            agent.run(books_no_synopsis)
+    def test_rejects_empty_resumos(self):
+        raw = json.dumps({"resumos": []})
+        agent = _make_educator(raw)
+        with pytest.raises(ValueError, match="at least one resumo"):
+            agent.run("test", SAMPLE_TOP5)
 
-    def test_raises_on_empty_books(self):
-        agent = _make_agent(json.dumps({"books": []}))
-        with pytest.raises(ValueError, match="at least one book"):
-            agent.run([])
+    def test_rejects_missing_resumo_field(self):
+        bad = [{"titulo": "X", "conexao_tema": "ok"}]
+        raw = json.dumps({"resumos": bad})
+        agent = _make_educator(raw)
+        with pytest.raises(ValueError, match="missing resumo"):
+            agent.run("test", SAMPLE_TOP5)
 
-    def test_prompt_includes_book_data(self):
-        mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({"books": SAMPLE_BOOKS_WITH_SYNOPSIS})
-        mock_client.models.generate_content.return_value = mock_response
+    def test_rejects_missing_conexao_tema(self):
+        bad = [{"titulo": "X", "resumo": "ok"}]
+        raw = json.dumps({"resumos": bad})
+        agent = _make_educator(raw)
+        with pytest.raises(ValueError, match="missing conexao_tema"):
+            agent.run("test", SAMPLE_TOP5)
 
-        agent = EducatorAgent(client=mock_client)
-        agent.run(SAMPLE_BOOKS)
+    def test_temperature(self):
+        assert EducatorAgent.temperature == 0.5
 
-        call_args = mock_client.models.generate_content.call_args
-        prompt = call_args.kwargs.get("contents") or call_args[1].get("contents", "")
-        assert "Clean Code" in prompt
-
-    def test_system_prompt_is_set(self):
-        agent = EducatorAgent(client=MagicMock())
-        assert "Educator Agent" in agent.system_prompt
+    def test_query_in_prompt(self):
+        raw = json.dumps({"resumos": SAMPLE_RESUMOS})
+        agent = _make_educator(raw)
+        agent.run("quero entender IA sem matemática", SAMPLE_TOP5)
+        call_args = agent.client.models.generate_content.call_args
+        prompt = call_args.kwargs["contents"]
+        assert "quero entender IA sem matemática" in prompt

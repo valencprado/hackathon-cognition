@@ -1,4 +1,4 @@
-"""Researcher Agent — searches for books based on subjects and format filters."""
+"""Researcher Agent — curates top 5 real media items based on topics."""
 
 from __future__ import annotations
 
@@ -8,38 +8,48 @@ from agents.base import BaseAgent
 
 
 class ResearcherAgent(BaseAgent):
-    """Takes subjects and format filters, returns five candidate books."""
+    """Takes topics and format filters, returns five real media items."""
+
+    temperature = 0.2
 
     system_prompt = (
-        "You are the Researcher Agent for a university library chatbot.\n"
-        "Given a set of subjects and format filters (e.g. books, comics/HQs, journals),\n"
-        "recommend exactly 5 real books that best cover those subjects.\n"
-        "Respect the format filters: only suggest items that match the selected formats.\n"
-        "For each book provide: title, author, year, and format.\n\n"
-        "RETURN ONLY JSON in this exact format:\n"
-        '{"books": [\n'
-        '  {"title": "...", "author": "...", "year": 2020, "format": "book"},\n'
-        "  ...\n"
-        "]}\n"
+        "Você é o Agente Pesquisador do BookMatch, sistema de recomendação de leituras.\n\n"
+        "Você é especialista em curadoria de livros, revistas e HQs. Seu trabalho "
+        "é receber tópicos já analisados e encontrar as 5 mídias reais que melhor "
+        "os atendem.\n\n"
+        "REGRAS ABSOLUTAS:\n"
+        "1. Responda SOMENTE com JSON puro e válido. Sem texto antes ou depois.\n"
+        "2. Recomende APENAS mídias que realmente existem. Nunca invente título ou autor.\n"
+        "3. Respeite RIGOROSAMENTE os formatos permitidos pelo usuário.\n"
+        '4. O campo "formato" deve ser EXATAMENTE: "livro", "revista" ou "hq".\n'
+        '5. "nota_amazon" deve ser decimal entre 1.0 e 5.0. Se não souber a nota '
+        "real, estime com base na popularidade (clássicos: entre 4.0 e 4.8).\n"
+        "6. Prefira obras reconhecidas e disponíveis no mercado brasileiro.\n"
+        '7. O array "top5" deve ter EXATAMENTE 5 itens. Nem mais, nem menos.\n'
+        "8. Distribua os itens entre os 4 tópicos quando possível.\n"
     )
 
-    def run(self, subjects: list[str], formats: list[str]) -> dict[str, list[dict[str, Any]]]:
+    def run(self, topicos: list[str], formats: list[str]) -> dict[str, list[dict[str, Any]]]:
         prompt = (
-            f"Subjects: {', '.join(subjects)}\n"
-            f"Allowed formats: {', '.join(formats)}\n"
-            "Recommend exactly 5 items matching the subjects and formats."
+            "Com base nos tópicos identificados pelo Agente Professor:\n\n"
+            f"TÓPICOS: {', '.join(topicos)}\n\n"
+            "FORMATOS PERMITIDOS (só inclua mídias nestes formatos):\n"
+            f"{', '.join(formats)}\n\n"
+            "Monte um TOP 5 de mídias REAIS que melhor cobrem esses tópicos.\n"
+            "Varie as abordagens: uma mais técnica, uma mais narrativa, etc."
         )
-        raw = self._call_model(prompt)
-        return self._parse_response(raw)
+        return self._run_with_retry(prompt)
 
     def _parse_response(self, raw: str) -> dict[str, list[dict[str, Any]]]:
         data: dict[str, Any] = super()._parse_response(raw)
-        books = data.get("books", [])
-        if not isinstance(books, list) or len(books) == 0:
-            raise ValueError("Researcher Agent must return at least one book")
-        required_keys = {"title", "author", "year", "format"}
-        for book in books:
-            missing = required_keys - set(book.keys())
+        top5 = data.get("top5", [])
+        if not isinstance(top5, list) or len(top5) != 5:
+            raise ValueError(
+                f"Researcher Agent must return exactly 5 items in top5, got {len(top5) if isinstance(top5, list) else top5!r}"
+            )
+        required_keys = {"titulo", "autor", "formato", "ano", "nota_amazon", "topico_relacionado"}
+        for item in top5:
+            missing = required_keys - set(item.keys())
             if missing:
-                raise ValueError(f"Book missing keys: {missing}")
-        return {"books": books}
+                raise ValueError(f"Item missing keys: {missing}")
+        return {"top5": top5}

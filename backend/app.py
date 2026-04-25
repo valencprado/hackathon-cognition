@@ -12,7 +12,7 @@ from auth.utils import hash_password
 from config import Config
 from pipeline.orchestrator import Orchestrator
 
-DEFAULT_FORMATS = ["book", "journal", "comic"]
+DEFAULT_FORMATS = ["livro", "revista", "hq"]
 
 
 def create_app(config_class=Config):
