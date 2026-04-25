@@ -47,7 +47,7 @@ class ResearcherAgent(BaseAgent):
             raise ValueError(
                 f"Researcher Agent must return exactly 5 items in top5, got {len(top5) if isinstance(top5, list) else top5!r}"
             )
-        required_keys = {"titulo", "autor", "formato", "ano", "nota_amazon", "topico_relacionado"}
+        required_keys = {"titulo", "autor", "formato",  "nota_amazon"}
         for item in top5:
             missing = required_keys - set(item.keys())
             if missing:

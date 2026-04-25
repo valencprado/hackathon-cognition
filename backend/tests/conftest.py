@@ -37,45 +37,39 @@ SAMPLE_TOP5 = [
         "titulo": "Supremacia da Máquina",
         "autor": "Nick Bostrom",
         "formato": "livro",
-        "ano": 2014,
+    
         "nota_amazon": 4.3,
-        "topico_relacionado": "Ética e riscos das tecnologias de IA",
         "isbn": "",
     },
     {
         "titulo": "Armas de Destruição Matemática",
         "autor": "Cathy O'Neil",
         "formato": "livro",
-        "ano": 2016,
+    
         "nota_amazon": 4.4,
-        "topico_relacionado": "Impactos da IA na sociedade e no trabalho",
         "isbn": "",
     },
     {
         "titulo": "Inteligência Artificial",
         "autor": "Kai-Fu Lee",
         "formato": "livro",
-        "ano": 2018,
+   
         "nota_amazon": 4.5,
-        "topico_relacionado": "Conceitos de IA explicados para leigos",
         "isbn": "",
     },
     {
         "titulo": "Homo Deus",
         "autor": "Yuval Noah Harari",
         "formato": "livro",
-        "ano": 2015,
+
         "nota_amazon": 4.6,
-        "topico_relacionado": "História e evolução da inteligência artificial",
         "isbn": "",
     },
     {
         "titulo": "A Era da IA",
         "autor": "Henry Kissinger",
         "formato": "livro",
-        "ano": 2021,
         "nota_amazon": 4.1,
-        "topico_relacionado": "Impactos da IA na sociedade e no trabalho",
         "isbn": "",
     },
 ]
