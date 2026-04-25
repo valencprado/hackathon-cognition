@@ -89,6 +89,10 @@ def update_book(book_id: int):
 
     data = request.get_json(silent=True) or {}
 
+    fmt = data.get("format_type")
+    if fmt is not None and fmt not in ("book", "comic", "journal"):
+        return jsonify({"error": "format_type must be one of: book, comic, journal"}), 400
+
     for field in ("title", "author", "year", "isbn", "format_type", "synopsis"):
         if field in data:
             setattr(book, field, data[field])
