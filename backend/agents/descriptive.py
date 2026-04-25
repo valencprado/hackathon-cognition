@@ -9,9 +9,8 @@ from agents.base import BaseAgent
 
 
 class DescriptiveAgent(BaseAgent):
-    """Creates rich fact sheets (sinopse, faixa etária, temas, simulated
-    Amazon reviews, and where to buy) for each recommended item.
-    All output is in Brazilian Portuguese."""
+    """Creates rich fact sheets (sinopse, faixa etária, temas, and where to
+    buy) for each recommended item.  All output is in Brazilian Portuguese."""
 
     temperature = 0.4
 
@@ -27,15 +26,9 @@ class DescriptiveAgent(BaseAgent):
         '4. "faixa_etaria": string descritiva. Ex: "A partir de 16 anos", "Adultos", '
         '"14+", "Todos os públicos".\n'
         '5. "temas": array com 3 a 6 strings curtas das temáticas centrais.\n'
-        '6. "opinioes_amazon": EXATAMENTE 2 opiniões SIMULADAS de forma realista:\n'
-        "   - Escritas em 1ª pessoa, como um leitor real escreveria\n"
-        "   - Entre 1 e 3 frases cada\n"
-        "   - Estrelas realistas — NÃO coloque 5 em tudo. Varie entre 3 e 5.\n"
-        "   - Reflita pontos fortes reais da obra, não elogios genéricos.\n"
-        "   ATENÇÃO: são opiniões simuladas pois não há acesso à API da Amazon.\n"
-        '7. "onde_encontrar": plataformas reais separadas por vírgula. '
+        '6. "onde_encontrar": plataformas reais separadas por vírgula. '
         'Ex: "Amazon, Kindle, Livraria Cultura, Estante Virtual".\n'
-        "8. Escreva em português do Brasil.\n"
+        "7. Escreva em português do Brasil.\n"
     )
 
     def run(self, top5: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
@@ -46,7 +39,6 @@ class DescriptiveAgent(BaseAgent):
             "- Sinopse de 3-4 frases convidativa\n"
             "- Faixa etária recomendada\n"
             "- 3 a 6 temas centrais da obra\n"
-            "- 2 opiniões simuladas de leitores Amazon (realistas, variadas, 1ª pessoa)\n"
             "- Plataformas onde encontrar no Brasil\n\n"
             "Seja específico e fiel às características reais de cada obra.\n"
             "Não use descrições genéricas."
@@ -58,7 +50,7 @@ class DescriptiveAgent(BaseAgent):
         fichas = data.get("fichas", [])
         if not isinstance(fichas, list) or len(fichas) == 0:
             raise ValueError("Descriptive Agent must return at least one ficha")
-        required_keys = {"titulo", "sinopse", "faixa_etaria", "temas", "opinioes_amazon", "onde_encontrar"}
+        required_keys = {"titulo", "sinopse", "faixa_etaria", "temas", "onde_encontrar"}
         for ficha in fichas:
             missing = required_keys - set(ficha.keys())
             if missing:

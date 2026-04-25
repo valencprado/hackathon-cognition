@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study AI — Biblioteca</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="page-wrapper" id="pageWrapper">
+
+  <!-- HERO SECTION -->
+  <section class="hero" id="heroSection">
+    <div class="hero-inner">
+
+      <!-- LOGO — clicável para voltar ao início (resetSearch) -->
+      <div class="logo-mark" id="logoMark" onclick="resetSearch()" title="Voltar ao início">
+        <img src="../static/img/logo.png"  alt="Logo" class="logo-img logo-main" />
+      </div>
+
+      <div class="hero-text">
+        <h1 class="hero-title">O que você quer<br><em>aprender hoje?</em></h1>
+        <p class="hero-sub">Encontre livros, HQs, revistas e DVDs disponíveis no acervo da nossa biblioteca.</p>
+      </div>
+
+      <div class="search-wrap" id="searchWrap">
+        <div class="search-box" id="searchBox">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Filosofia, Machine Learning, História..."
+            autocomplete="off"
+          />
+          <button class="search-btn" id="searchBtn" aria-label="Pesquisar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M13 6L19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- FILTROS DE FORMATO -->
+        <div class="format-filters" id="formatFilters">
+          <span class="filter-label">Formatos:</span>
+          <div class="checkboxes">
+
+            <label class="check-item">
+              <input type="checkbox" name="format" value="Livro" checked />
+              <span class="check-box"></span>
+              <span class="check-text">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Livro
+              </span>
+            </label>
+
+            <label class="check-item">
+              <input type="checkbox" name="format" value="HQ" checked />
+              <span class="check-box"></span>
+              <span class="check-text">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M3 9h18M9 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                HQs
+              </span>
+            </label>
+
+            <label class="check-item">
+              <input type="checkbox" name="format" value="Revista" checked />
+              <span class="check-box"></span>
+              <span class="check-text">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Revistas
+              </span>
+            </label>
+
+            <label class="check-item">
+              <input type="checkbox" name="format" value="DVD" checked />
+              <span class="check-box"></span>
+              <span class="check-text">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                DVD
+              </span>
+            </label>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-decoration">
+      <div class="deco-ring ring-1"></div>
+      <div class="deco-ring ring-2"></div>
+      <div class="deco-ring ring-3"></div>
+    </div>
+  </section>
+
+  <!-- RESULTS SECTION -->
+  <section class="results-section" id="resultsSection">
+    <div class="results-header" id="resultsHeader">
+      <!-- Logo clicável para voltar -->
+      <div class="results-logo" onclick="resetSearch()" title="Nova pesquisa" style="cursor:pointer;">
+      </div>
+      <div class="results-meta">
+        <span class="results-query-label">Resultados para</span>
+        <strong class="results-query-text" id="resultsQueryText"></strong>
+      </div>
+    </div>
+
+    <div class="results-list" id="resultsList">
+      <!-- Itens injetados pelo JS -->
+    </div>
+
+    <div class="results-footer">
+      <p>Não encontrou o item? <a href="#" class="link-green">Solicitar aquisição ao acervo</a></p>
+    </div>
+  </section>
+
+  <!-- EXPANDED CARD OVERLAY -->
+  <div class="card-overlay" id="cardOverlay" aria-hidden="true">
+    <div class="card-modal" id="cardModal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modalClose" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="modal-content" id="modalContent">
+        <!-- Injetado pelo JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- /page-wrapper -->
+
+    <footer class="footer">
+        <p>©studyGuide2025</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

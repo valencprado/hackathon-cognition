@@ -27,7 +27,7 @@ class TestDescriptiveAgent:
         assert len(result["fichas"]) == 5
         assert result["fichas"][0]["titulo"] == "Supremacia da Máquina"
         assert "sinopse" in result["fichas"][0]
-        assert "opinioes_amazon" in result["fichas"][0]
+        assert "onde_encontrar" in result["fichas"][0]
 
     def test_rejects_empty_fichas(self):
         raw = json.dumps({"fichas": []})

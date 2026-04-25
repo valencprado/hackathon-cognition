@@ -46,7 +46,6 @@ class TestOrchestrator:
         assert "sinopse" in book
         assert "faixa_etaria" in book
         assert "temas" in book
-        assert "opinioes_amazon" in book
         assert "onde_encontrar" in book
 
     def test_passes_query_to_educator(self):

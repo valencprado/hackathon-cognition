@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
 from pipeline.orchestrator import Orchestrator
@@ -11,6 +11,11 @@ app = Flask(__name__)
 CORS(app)
 
 DEFAULT_FORMATS = ["livro", "revista", "hq"]
+
+
+@app.route("/")
+def index() -> str:
+    return render_template("index.html")
 
 
 @app.route("/health", methods=["GET"])
